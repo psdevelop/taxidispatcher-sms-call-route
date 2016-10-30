@@ -1,0 +1,60 @@
+<resources>
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Strings related to Settings -->
+
+    <!-- Example General settings -->
+    <string name="pref_header_general">Основные</string>
+
+    <string name="pref_title_social_recommendations">Рассылать СМС-заказы</string>
+    <string name="pref_description_social_recommendations">Рассылка СМС-заказов водителям
+    </string>
+
+    <string name="pref_title_display_name">Шаблон SMS заказа водителю</string>
+    <string name="pref_default_display_name">Заказ ***___msg_text</string>
+
+    <string name="pref_title_add_friends_to_messages">Add friends to messages</string>
+    <string-array name="pref_example_list_titles">
+        <item>Always</item>
+        <item>When possible</item>
+        <item>Never</item>
+    </string-array>
+    <string-array name="pref_example_list_values">
+        <item>1</item>
+        <item>0</item>
+        <item>-1</item>
+    </string-array>
+
+    <!-- Example settings for Data & Sync -->
+    <string name="pref_header_data_sync">Настройки работы с БД</string>
+
+    <string name="pref_title_sync_frequency">Частота запросов</string>
+    <string-array name="pref_sync_frequency_titles">
+        <item>10 секунд</item>
+        <item>15 секунд</item>
+        <item>20 секунд</item>
+        <item>25 секунд</item>
+        <item>35 секунд</item>
+        <item>50 секунд</item>
+    </string-array>
+    <string-array name="pref_sync_frequency_values">
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>25</item>
+        <item>35</item>
+        <item>50</item>
+    </string-array>
+
+    <string name="pref_title_system_sync_settings">System sync settings</string>
+
+    <!-- Example settings for Notifications -->
+    <string name="pref_header_notifications">Notifications</string>
+
+    <string name="pref_title_new_message_notifications">New message notifications</string>
+
+    <string name="pref_title_ringtone">Ringtone</string>
+    <string name="pref_ringtone_silent">Silent</string>
+
+    <string name="pref_title_vibrate">Vibrate</string>
+</resources>
