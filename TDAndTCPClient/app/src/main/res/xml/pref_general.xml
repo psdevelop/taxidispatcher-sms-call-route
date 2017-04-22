@@ -61,6 +61,24 @@
         android:maxLines="1" />
 
     <CheckBoxPreference
+        android:key="ENABLE_ONPLACE_CLIENT_SMS"
+        android:title="SMS клиенту об ожидающей машине"
+        android:summary="Отсылать SMS клиенту об ожидающей машине"
+        android:defaultValue="false" />
+
+    <!-- NOTE: EditTextPreference accepts EditText attributes. -->
+    <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
+    <EditTextPreference
+        android:key="ONPLACE_CLIENT_SMS_TEMPLATE"
+        android:title="Шаблон SMS об ожидающей машине"
+        android:defaultValue="Вас ожидает такси ***___msg_text"
+        android:selectAllOnFocus="true"
+        android:inputType="textCapWords"
+        android:capitalize="words"
+        android:singleLine="true"
+        android:maxLines="1" />
+
+    <CheckBoxPreference
         android:key="ENABLE_REPORT_CLIENT_SMS"
         android:title="SMS отчет клиенту о поездке"
         android:summary="Отсылать SMS клиенту об отчете по поездке"
@@ -102,8 +120,8 @@
 
     <CheckBoxPreference
         android:key="ALT_FIX_DETECTING"
-        android:title="Доб. вх. вызовов альт. функцией"
-        android:summary="Доб. вх. вызовов альт. функцией"
+        android:title="Доб. ВВ альт. функцией"
+        android:summary="!!!Не трогать без нужды"
         android:defaultValue="false" />
 
     <CheckBoxPreference

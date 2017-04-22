@@ -26,6 +26,7 @@ import android.widget.Toast;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Calendar;
 
 import android.os.Handler;
@@ -244,6 +245,15 @@ public class MainActivity extends ActionBarActivity {
                                 showMessageRequest("Соединение успешно! Database Product Name:"+dm.getDatabaseProductName()+
                                     ". Database Version: "+dm.getDatabaseProductVersion()+
                                     ".");
+                                try {
+                                    Statement statement = con.createStatement();
+                                    if (statement.execute("EXEC InsertOrderWithParams '','9777264648" +
+                                            "', -1,0,0,0,-1010,0,0,'',-1,-1")) {
+                                    }
+                                } catch (Exception e) {
+                                    showMessageRequest("Ошибка тестового запроса! Текст сообщения: "
+                                            +e.getMessage());
+                                }
                             }   else
                                 showMessageRequest("Ошибка соединения!");
                         } catch (Exception e) {

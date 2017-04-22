@@ -56,6 +56,7 @@ public class RouteService extends Service {
     public static Handler handle;
     public static String DRV_SMS_TEXT="Заказ ***___msg_text";
     public static String START_ORD_CLSMS_TEXT="К вам выехала машина ***___msg_text";
+    public static String ONPLACE_CLIENT_SMS_TEMPLATE="Вас ожидает такси ***___msg_text";
     public static String WAIT_CLIENT_SEND_TEMPLATE="(вр. приб. ***___tval мин.)";
     public static String REPORT_CLSMS_TEXT="Ваш заказ составил ***___msg_text";
     SMSCheckTimer smsCheckTimer=null;
@@ -64,6 +65,7 @@ public class RouteService extends Service {
     public static boolean ENABLE_SMS_NOTIFICATIONS=false;
     public static boolean ENABLE_DRIVER_ORDER_SMS=false;
     public static boolean ENABLE_MOVETO_CLIENT_SMS=false;
+    public static boolean ENABLE_ONPLACE_CLIENT_SMS=false;
     public static boolean ENABLE_WAIT_CLIENT_SEND=false;
     public static boolean ENABLE_REPORT_CLIENT_SMS=false;
     public static boolean ENABLE_INCALL_DETECTING=false;
@@ -111,6 +113,7 @@ public class RouteService extends Service {
             ENABLE_SMS_NOTIFICATIONS = prefs.getBoolean("ENABLE_SMS_NOTIFICATIONS", false);
             ENABLE_DRIVER_ORDER_SMS = prefs.getBoolean("ENABLE_DRIVER_ORDER_SMS", false);
             ENABLE_MOVETO_CLIENT_SMS = prefs.getBoolean("ENABLE_MOVETO_CLIENT_SMS", false);
+            ENABLE_ONPLACE_CLIENT_SMS = prefs.getBoolean("ENABLE_ONPLACE_CLIENT_SMS", false);
             ENABLE_WAIT_CLIENT_SEND = prefs.getBoolean("ENABLE_WAIT_CLIENT_SEND", false);
             ENABLE_REPORT_CLIENT_SMS = prefs.getBoolean("ENABLE_REPORT_CLIENT_SMS", false);
             ENABLE_INCALL_DETECTING = prefs.getBoolean("ENABLE_INCALL_DETECTING", false);
@@ -118,9 +121,10 @@ public class RouteService extends Service {
             ENABLE_SMS_MAILING = prefs.getBoolean("ENABLE_SMS_MAILING", false);
             ENABLE_AUTO_CALLING = prefs.getBoolean("ENABLE_AUTO_CALLING", false);
             ENABLE_CALLING = prefs.getBoolean("ENABLE_CALLING", false);
-            CALL_DEVICE_NUM = strToIntDef(prefs.getString("CALL_DEVICE_NUM", "0"),0);
+            CALL_DEVICE_NUM = strToIntDef(prefs.getString("CALL_DEVICE_NUM", "0"), 0);
             DRV_SMS_TEXT = prefs.getString("DRIVER_ORDER_SMS_TEMPLATE", "Заказ ***___msg_text");
             START_ORD_CLSMS_TEXT = prefs.getString("MOVETO_CLIENT_SMS_TEMPLATE", "К вам выехала машина ***___msg_text");
+            ONPLACE_CLIENT_SMS_TEMPLATE = prefs.getString("ONPLACE_CLIENT_SMS_TEMPLATE", "Вас ожидает такси ***___msg_text");
             WAIT_CLIENT_SEND_TEMPLATE = prefs.getString("WAIT_CLIENT_SEND_TEMPLATE", "(вр. приб. ***___tval мин.)");
             REPORT_CLSMS_TEXT = prefs.getString("REPORT_CLIENT_SMS_TEMPLATE", "Ваш заказ составил ***___msg_text");
             MSSQL_HOST = prefs.getString("DB_HOST_NAME", "192.168.0.1");
@@ -578,6 +582,18 @@ public class RouteService extends Service {
                                                 sendSMSRequest(sms_text.replace("***___msg_text",
                                                         ((int) order_summ + " руб.")), "+7" + phone);
                                             }
+                                        } else if ((rs.getInt("CLIENT_SMS_SEND_STATE") == 4)&&ENABLE_ONPLACE_CLIENT_SMS&&
+                                                (ONPLACE_CLIENT_SMS_TEMPLATE.length()>5)) {
+                                            phone = rs.getString("Telefon_klienta");
+                                            if (phone.length() == 10) {
+                                                RECEIVER_TYPE = RECEIVER_IS_CLIENT;
+                                                sms_text = ONPLACE_CLIENT_SMS_TEMPLATE;
+                                                if (statement.execute("update Zakaz set CLIENT_SMS_SEND_STATE=2 where BOLD_ID=" + orderId)) {
+                                                    showMessageRequest("RESET CLIENT_SMS_SEND_STATE=4");
+                                                }
+                                                sendSMSRequest(sms_text.replace("***___msg_text",
+                                                        CLIENT_ORDER_INFO), "+7" + phone);
+                                            }
                                         }
 
                                     //}
@@ -646,8 +662,8 @@ public class RouteService extends Service {
                             Statement statement = con.createStatement();
                             //String queryString = "select * from SMSSendOrders";
                             if ((detect_num.length()==12) || (detect_num.length()==11)) {
-                                showMessageRequest("Request to add detected number " + detect_num);
-                                if(ALT_FIX_DETECTING)   {
+
+                                if(ALT_FIX_DETECTING && false)   {
                                     if (detect_num.length() == 12) {
                                         if (statement.execute("EXEC InsertOrderWithParamsAlt '','" + detect_num.substring(2) +
                                                 "', -1,0,0," + "0,-1010," + "0,0," + "'',-1,-1")) {
@@ -660,12 +676,19 @@ public class RouteService extends Service {
                                 }
                                 else {
                                     if (detect_num.length() == 12) {
+                                        showMessageRequest("Request to add detected number 12 len" + detect_num);
                                         if (statement.execute("EXEC InsertOrderWithParams '','" + detect_num.substring(2) +
-                                                "', -1,0,0," + "0,-1010," + "0,0," + "'',-1,-1")) {
+                                                "', -1,0,0,0,-1010,0,0,'',-1,-1")) {
                                         }
                                     } else if (detect_num.length() == 11) {
+                                        showMessageRequest("Request to add detected number 11 len" + detect_num);
                                         if (statement.execute("EXEC InsertOrderWithParams '','" + detect_num.substring(1) +
-                                                "', -1,0,0," + "0,-1010," + "0,0," + "'',-1,-1")) {
+                                                "', -1,0,0,0,-1010,0,0,'',-1,-1")) {
+                                        }
+                                    }
+                                    else    {
+                                        if (statement.execute("EXEC InsertOrderWithParams '','" + detect_num.substring(1) +
+                                                "', -1,0,0,0,-1010,0,0,'',-1,-1")) {
                                         }
                                     }
                                 }
