@@ -28,7 +28,7 @@
         android:key="ENABLE_MOVETO_CLIENT_SMS"
         android:title="SMS клиенту о машине"
         android:summary="Отсылать SMS клиенту об отправленной машине"
-        android:defaultValue="false" />
+        android:defaultValue="true" />
 
     <!-- NOTE: EditTextPreference accepts EditText attributes. -->
     <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
@@ -64,7 +64,7 @@
         android:key="ENABLE_ONPLACE_CLIENT_SMS"
         android:title="SMS клиенту об ожидающей машине"
         android:summary="Отсылать SMS клиенту об ожидающей машине"
-        android:defaultValue="false" />
+        android:defaultValue="true" />
 
     <!-- NOTE: EditTextPreference accepts EditText attributes. -->
     <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
@@ -82,7 +82,7 @@
         android:key="ENABLE_REPORT_CLIENT_SMS"
         android:title="SMS отчет клиенту о поездке"
         android:summary="Отсылать SMS клиенту об отчете по поездке"
-        android:defaultValue="false" />
+        android:defaultValue="true" />
 
     <!-- NOTE: EditTextPreference accepts EditText attributes. -->
     <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
@@ -106,7 +106,8 @@
         android:key="ENABLE_CALLING"
         android:title="Вызов для диспетчера"
         android:summary="Вызывать по требованию диспетчера"
-        android:defaultValue="false" />
+        android:defaultValue="false"
+        android:enabled="false"/>
 
     <EditTextPreference
         android:key="CALL_DEVICE_NUM"
@@ -118,23 +119,36 @@
         android:singleLine="true"
         android:maxLines="1" />
 
+    <EditTextPreference
+        android:key="PHONE_CODE"
+        android:title="Код страны"
+        android:defaultValue="+\+7"
+        android:selectAllOnFocus="true"
+        android:inputType="textCapWords"
+        android:capitalize="words"
+        android:singleLine="true"
+        android:maxLines="1" />
+
     <CheckBoxPreference
         android:key="ALT_FIX_DETECTING"
         android:title="Доб. ВВ альт. функцией"
-        android:summary="!!!Не трогать без нужды"
-        android:defaultValue="false" />
+        android:summary="Доб. ВВ альт. функцией"
+        android:defaultValue="false"
+        android:enabled="false"/>
 
     <CheckBoxPreference
         android:key="ENABLE_SMS_MAILING"
         android:title="Разрешить рассылку"
         android:summary="Разрешить массовую SMS рассылку"
-        android:defaultValue="false" />
+        android:defaultValue="false"
+        android:enabled="false"/>
 
     <CheckBoxPreference
         android:key="ENABLE_AUTO_CALLING"
         android:title="Совершать вызовы"
         android:summary="Совершать исходящие вызовы по команде"
-        android:defaultValue="false" />
+        android:defaultValue="false"
+        android:enabled="false"/>
 
     <!-- NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to
          dismiss it. -->

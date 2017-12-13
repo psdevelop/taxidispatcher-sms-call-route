@@ -246,10 +246,10 @@ public class MainActivity extends ActionBarActivity {
                                     ". Database Version: "+dm.getDatabaseProductVersion()+
                                     ".");
                                 try {
-                                    Statement statement = con.createStatement();
-                                    if (statement.execute("EXEC InsertOrderWithParams '','9777264648" +
-                                            "', -1,0,0,0,-1010,0,0,'',-1,-1")) {
-                                    }
+                                    //Statement statement = con.createStatement();
+                                    //if (statement.execute("EXEC InsertOrderWithParams '','9777264648" +
+                                    //        "', -1,0,0,0,-1010,0,0,'',-1,-1")) {
+                                    //}
                                 } catch (Exception e) {
                                     showMessageRequest("Ошибка тестового запроса! Текст сообщения: "
                                             +e.getMessage());

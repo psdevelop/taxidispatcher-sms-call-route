@@ -7,8 +7,8 @@ android {
         applicationId "com.psdevelop.tdandtcpclient"
         minSdkVersion 15
         targetSdkVersion 21
-        versionCode 10004
-        versionName "1.0.4"
+        versionCode 10008
+        versionName "1.0.8"
     }
     buildTypes {
         release {

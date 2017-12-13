@@ -73,6 +73,7 @@ public class RouteService extends Service {
     public static boolean ENABLE_AUTO_CALLING=false;
     public static boolean ENABLE_CALLING=false;
     static int CALL_DEVICE_NUM = 0;
+    public static String PHONE_CODE="+7";
     public static boolean ALT_FIX_DETECTING=false;
 
     static SharedPreferences prefs=null;
@@ -122,6 +123,7 @@ public class RouteService extends Service {
             ENABLE_AUTO_CALLING = prefs.getBoolean("ENABLE_AUTO_CALLING", false);
             ENABLE_CALLING = prefs.getBoolean("ENABLE_CALLING", false);
             CALL_DEVICE_NUM = strToIntDef(prefs.getString("CALL_DEVICE_NUM", "0"), 0);
+            PHONE_CODE = prefs.getString("PHONE_CODE", "+7");
             DRV_SMS_TEXT = prefs.getString("DRIVER_ORDER_SMS_TEMPLATE", "Заказ ***___msg_text");
             START_ORD_CLSMS_TEXT = prefs.getString("MOVETO_CLIENT_SMS_TEMPLATE", "К вам выехала машина ***___msg_text");
             ONPLACE_CLIENT_SMS_TEMPLATE = prefs.getString("ONPLACE_CLIENT_SMS_TEMPLATE", "Вас ожидает такси ***___msg_text");
@@ -172,7 +174,8 @@ public class RouteService extends Service {
                 else if (msg.arg1 == PROCESS_CALL_DATA) {
                     try	{
                         Intent dialIntent = new Intent(Intent.ACTION_CALL,
-                                Uri.parse("tel:+7" + msg.getData().
+                                Uri.parse("tel:" + (msg.getData().
+                                        getString(PHONE).length() > 10 ? "" : PHONE_CODE) + msg.getData().
                                         getString(PHONE)));
                         dialIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(dialIntent);
@@ -305,6 +308,7 @@ public class RouteService extends Service {
     }
 
     public int onStartCommand(Intent intent, int flags, int startId) {
+        showToast("Перезагружаем настройки!");
         reloadPrefs();
         showNotification("Упр. шлюз", "Запущена основная служба шлюза!");
         sendInfoBroadcast( ID_ACTION_SHOW_OUTSMS_INFO, "Запущена основная служба шлюза!");
@@ -484,13 +488,14 @@ public class RouteService extends Service {
 
             }.execute();
         }   else    {
-            sendInfoBroadcast( ID_ACTION_SHOW_OUTSMS_INFO, "SMS отправка запрещена!");
+            //sendInfoBroadcast( ID_ACTION_SHOW_OUTSMS_INFO, "SMS отправка запрещена!");
         }
     }
 
     public void checkWaitingSMS()   {
         if (ENABLE_SMS_NOTIFICATIONS&&(ENABLE_DRIVER_ORDER_SMS||
-                ENABLE_MOVETO_CLIENT_SMS||ENABLE_REPORT_CLIENT_SMS)) {
+                ENABLE_MOVETO_CLIENT_SMS||ENABLE_REPORT_CLIENT_SMS
+        ||ENABLE_ONPLACE_CLIENT_SMS)) {
             new AsyncTask() {
                 public void showMessageRequest(String msg_text) {
                     //this.showMyMsg("sock show timer");
@@ -545,7 +550,7 @@ public class RouteService extends Service {
 
                                         if ((rs.getInt("DRIVER_SMS_SEND_STATE") == 1)&&ENABLE_DRIVER_ORDER_SMS&&
                                                 (DRV_SMS_TEXT.length()>5)) {
-                                            if (phone.length() == 10) {
+                                            if (phone.length() >= 10) {
                                                 RECEIVER_TYPE = RECEIVER_IS_DRIVER;
                                                 showMessageRequest("RESET DRIVER_SMS_SEND_STATE=2 phone=" +
                                                         phone + " text=" + sms_text);
@@ -553,12 +558,13 @@ public class RouteService extends Service {
 
                                                 }
                                                 sendSMSRequest(sms_text.replace("***___msg_text",
-                                                        "+7"+client_phone + ":" + order_adres), "+7" + phone);
-                                            }
+                                                        (phone.length() > 10 ? "" : PHONE_CODE)+client_phone + ":" + order_adres), (phone.length() >= 10 ? "" : PHONE_CODE) + phone);
+                                            } else
+                                                showMessageRequest("Длина телефона для отправки СМС меньше 10-ти");
                                         } else if ((rs.getInt("CLIENT_SMS_SEND_STATE") == 1)&&ENABLE_MOVETO_CLIENT_SMS&&
                                                 (START_ORD_CLSMS_TEXT.length()>5)) {
                                             phone = rs.getString("Telefon_klienta");
-                                            if (phone.length() == 10) {
+                                            if (phone.length() >= 10) {
                                                 RECEIVER_TYPE = RECEIVER_IS_CLIENT;
                                                 sms_text = START_ORD_CLSMS_TEXT;
                                                 if (statement.execute("update Zakaz set CLIENT_SMS_SEND_STATE=2 where BOLD_ID=" + orderId)) {
@@ -568,32 +574,35 @@ public class RouteService extends Service {
                                                         CLIENT_ORDER_INFO) + (ENABLE_WAIT_CLIENT_SEND ?
                                                         (waitTime > 0 ? WAIT_CLIENT_SEND_TEMPLATE.length() > 5 ? (
                                                                 WAIT_CLIENT_SEND_TEMPLATE.replace("***___tval", waitTime + "")
-                                                        ) : "" : "") : ""), "+7" + phone);
-                                            }
+                                                        ) : "" : "") : ""), (phone.length() > 10 ? "" : PHONE_CODE) + phone);
+                                            } else
+                                                showMessageRequest("Длина телефона для отправки СМС меньше 10-ти");
                                         } else if ((rs.getInt("CLIENT_SMS_SEND_STATE") == 3)&&ENABLE_REPORT_CLIENT_SMS&&
                                                 (REPORT_CLSMS_TEXT.length()>5)) {
                                             phone = rs.getString("Telefon_klienta");
-                                            if (phone.length() == 10) {
+                                            if (phone.length() >= 10) {
                                                 RECEIVER_TYPE = RECEIVER_IS_CLIENT;
                                                 sms_text = REPORT_CLSMS_TEXT;
                                                 if (statement.execute("update Zakaz set CLIENT_SMS_SEND_STATE=2 where BOLD_ID=" + orderId)) {
                                                     showMessageRequest("RESET CLIENT_SMS_SEND_STATE=2");
                                                 }
                                                 sendSMSRequest(sms_text.replace("***___msg_text",
-                                                        ((int) order_summ + " руб.")), "+7" + phone);
-                                            }
+                                                        ((int) order_summ + " руб.")), (phone.length() > 10 ? "" : PHONE_CODE) + phone);
+                                            } else
+                                                showMessageRequest("Длина телефона для отправки СМС меньше 10-ти");
                                         } else if ((rs.getInt("CLIENT_SMS_SEND_STATE") == 4)&&ENABLE_ONPLACE_CLIENT_SMS&&
                                                 (ONPLACE_CLIENT_SMS_TEMPLATE.length()>5)) {
                                             phone = rs.getString("Telefon_klienta");
-                                            if (phone.length() == 10) {
+                                            if (phone.length() >= 10) {
                                                 RECEIVER_TYPE = RECEIVER_IS_CLIENT;
                                                 sms_text = ONPLACE_CLIENT_SMS_TEMPLATE;
                                                 if (statement.execute("update Zakaz set CLIENT_SMS_SEND_STATE=2 where BOLD_ID=" + orderId)) {
                                                     showMessageRequest("RESET CLIENT_SMS_SEND_STATE=4");
                                                 }
                                                 sendSMSRequest(sms_text.replace("***___msg_text",
-                                                        CLIENT_ORDER_INFO), "+7" + phone);
-                                            }
+                                                        CLIENT_ORDER_INFO), (phone.length() > 10 ? "" : PHONE_CODE) + phone);
+                                            } else
+                                                showMessageRequest("Длина телефона для отправки СМС меньше 10-ти");
                                         }
 
                                     //}
@@ -634,6 +643,7 @@ public class RouteService extends Service {
 
     public void insertDetectNumberIntoDB(String phone_number)   {
         final String detect_num=phone_number;
+        //showToast("["+phone_number+"]");
         new AsyncTask() {
             public void showMessageRequest(String msg_text)	{
                 //this.showMyMsg("sock show timer");
@@ -661,7 +671,7 @@ public class RouteService extends Service {
 
                             Statement statement = con.createStatement();
                             //String queryString = "select * from SMSSendOrders";
-                            if ((detect_num.length()==12) || (detect_num.length()==11)) {
+                            if ((detect_num.length()==12) || (detect_num.length()==11) || true) {
 
                                 if(ALT_FIX_DETECTING && false)   {
                                     if (detect_num.length() == 12) {
@@ -675,9 +685,10 @@ public class RouteService extends Service {
                                     }
                                 }
                                 else {
-                                    if (detect_num.length() == 12) {
+                                    if (detect_num.length() >= 12) {
                                         showMessageRequest("Request to add detected number 12 len" + detect_num);
-                                        if (statement.execute("EXEC InsertOrderWithParams '','" + detect_num.substring(2) +
+                                        if (statement.execute("EXEC InsertOrderWithParams '','" +
+                                                detect_num.replace(PHONE_CODE,"") +
                                                 "', -1,0,0,0,-1010,0,0,'',-1,-1")) {
                                         }
                                     } else if (detect_num.length() == 11) {
@@ -687,7 +698,8 @@ public class RouteService extends Service {
                                         }
                                     }
                                     else    {
-                                        if (statement.execute("EXEC InsertOrderWithParams '','" + detect_num.substring(1) +
+                                        showMessageRequest("Request to add detected number other len" + detect_num);
+                                        if (statement.execute("EXEC InsertOrderWithParams '','" + detect_num +
                                                 "', -1,0,0,0,-1010,0,0,'',-1,-1")) {
                                         }
                                     }
