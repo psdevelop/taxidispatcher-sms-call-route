@@ -59,6 +59,7 @@ public class RouteService extends Service {
     public static String ONPLACE_CLIENT_SMS_TEMPLATE="Вас ожидает такси ***___msg_text";
     public static String WAIT_CLIENT_SEND_TEMPLATE="(вр. приб. ***___tval мин.)";
     public static String REPORT_CLSMS_TEXT="Ваш заказ составил ***___msg_text";
+    public static String REPORT_BONUS_INFO_TEMPLATE="(бонусы ***___bonusval)";
     SMSCheckTimer smsCheckTimer=null;
     CallItCheckTimer callItCheckTimer=null;
 
@@ -68,6 +69,7 @@ public class RouteService extends Service {
     public static boolean ENABLE_ONPLACE_CLIENT_SMS=false;
     public static boolean ENABLE_WAIT_CLIENT_SEND=false;
     public static boolean ENABLE_REPORT_CLIENT_SMS=false;
+    public static boolean ENABLE_REPORT_BONUS_INFO=false;
     public static boolean ENABLE_INCALL_DETECTING=false;
     public static boolean ENABLE_SMS_MAILING=false;
     public static boolean ENABLE_AUTO_CALLING=false;
@@ -118,6 +120,7 @@ public class RouteService extends Service {
             ENABLE_ONPLACE_CLIENT_SMS = prefs.getBoolean("ENABLE_ONPLACE_CLIENT_SMS", false);
             ENABLE_WAIT_CLIENT_SEND = prefs.getBoolean("ENABLE_WAIT_CLIENT_SEND", false);
             ENABLE_REPORT_CLIENT_SMS = prefs.getBoolean("ENABLE_REPORT_CLIENT_SMS", false);
+            ENABLE_REPORT_BONUS_INFO = prefs.getBoolean("ENABLE_REPORT_BONUS_INFO", false);
             ENABLE_INCALL_DETECTING = prefs.getBoolean("ENABLE_INCALL_DETECTING", false);
             ALT_FIX_DETECTING = prefs.getBoolean("ALT_FIX_DETECTING", false);
             ENABLE_SMS_MAILING = prefs.getBoolean("ENABLE_SMS_MAILING", false);
@@ -131,6 +134,7 @@ public class RouteService extends Service {
             ONPLACE_CLIENT_SMS_TEMPLATE = prefs.getString("ONPLACE_CLIENT_SMS_TEMPLATE", "Вас ожидает такси ***___msg_text");
             WAIT_CLIENT_SEND_TEMPLATE = prefs.getString("WAIT_CLIENT_SEND_TEMPLATE", "(вр. приб. ***___tval мин.)");
             REPORT_CLSMS_TEXT = prefs.getString("REPORT_CLIENT_SMS_TEMPLATE", "Ваш заказ составил ***___msg_text");
+            REPORT_BONUS_INFO_TEMPLATE = prefs.getString("REPORT_BONUS_INFO_TEMPLATE", "(бонусы ***___bonusval)");
             MSSQL_HOST = prefs.getString("DB_HOST_NAME", "192.168.0.1");
             MSSQL_DBNAME = prefs.getString("DATABASE_NAME", "TD5R1");
             MSSQL_INSTNAME = prefs.getString("DBSRV_INSTANCE_NAME", "SQLEXPRESS");
@@ -546,6 +550,29 @@ public class RouteService extends Service {
                                     int orderId = rs.getInt("BOLD_ID");
                                     int waitTime = rs.getInt("WAITING");
                                     double order_summ = rs.getDouble("Uslovn_stoim");
+
+                                    double bonus_add = 0;
+                                    try {
+                                        rs.findColumn("bonus_add");
+                                        bonus_add = rs.getDouble("bonus_add");
+                                    } catch (Exception e) { }
+
+                                    double bonus_use = 0;
+                                    try {
+                                        rs.findColumn("bonus_use");
+                                        bonus_use = rs.getDouble("bonus_use");
+                                    } catch (Exception e) { }
+
+                                    double bonus_all = 0;
+                                    try {
+                                        rs.findColumn("bonus_all");
+                                        bonus_all = rs.getDouble("bonus_all");
+                                    } catch (Exception e) { }
+
+                                    String bonusInfo = (bonus_add > 0 ? "+" + bonus_add : "") +
+                                            (bonus_use > 0 ? " -" + bonus_use : "") +
+                                            (bonus_all > 0 ? " всего:" + bonus_all : "");
+
                                     String client_phone = rs.getString("Telefon_klienta");
                                     String order_adres = rs.getString("Adres_vyzova_vvodim");
                                     String CLIENT_ORDER_INFO = rs.getString("CLIENT_ORDER_INFO");
@@ -589,7 +616,10 @@ public class RouteService extends Service {
                                                     showMessageRequest("RESET CLIENT_SMS_SEND_STATE=2");
                                                 }
                                                 sendSMSRequest(sms_text.replace("***___msg_text",
-                                                        ((int) order_summ + " " + CURRENCY_SHORT)), (phone.length() > 10 ? "" : PHONE_CODE) + phone);
+                                                        ((int) order_summ + " " + CURRENCY_SHORT)) + (ENABLE_REPORT_BONUS_INFO ?
+                                                        (bonusInfo.length() > 0 ? REPORT_BONUS_INFO_TEMPLATE.length() > 5 ? (
+                                                                REPORT_BONUS_INFO_TEMPLATE.replace("***___bonusval", bonusInfo)
+                                                        ) : "" : "") : ""), (phone.length() > 10 ? "" : PHONE_CODE) + phone);
                                             } else
                                                 showMessageRequest("Длина телефона для отправки СМС меньше 5-ти");
                                         } else if ((rs.getInt("CLIENT_SMS_SEND_STATE") == 4)&&ENABLE_ONPLACE_CLIENT_SMS&&

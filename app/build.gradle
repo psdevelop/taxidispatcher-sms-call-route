@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "26.0.2"
+    compileSdkVersion 26
+    buildToolsVersion "27.0.3"
     defaultConfig {
         applicationId "com.psdevelop.tdandtcpclient"
         minSdkVersion 15
-        targetSdkVersion 23
-        versionCode 100011
-        versionName "1.0.11"
+        targetSdkVersion 26
+        versionCode 100012
+        versionName "1.0.12"
     }
     buildTypes {
         release {

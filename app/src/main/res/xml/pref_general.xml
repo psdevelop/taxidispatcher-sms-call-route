@@ -97,6 +97,24 @@
         android:maxLines="1" />
 
     <CheckBoxPreference
+        android:key="ENABLE_REPORT_BONUS_INFO"
+        android:title="Информация о бонусах в SMS"
+        android:summary="Отсылать в SMS клиенту информацию о бонусах"
+        android:defaultValue="false" />
+
+    <!-- NOTE: EditTextPreference accepts EditText attributes. -->
+    <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
+    <EditTextPreference
+        android:key="REPORT_BONUS_INFO_TEMPLATE"
+        android:title="Шаблон SMS о бонусах"
+        android:defaultValue="(бонусы ***___bonusval)"
+        android:selectAllOnFocus="true"
+        android:inputType="textCapWords"
+        android:capitalize="words"
+        android:singleLine="true"
+        android:maxLines="1" />
+
+    <CheckBoxPreference
         android:key="ENABLE_INCALL_DETECTING"
         android:title="Определение вх. номеров"
         android:summary="Определять номера входящих вызовов"
