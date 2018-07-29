@@ -353,6 +353,7 @@ public class MainActivity extends ActionBarActivity {
                         Connection con = null;
 
                         try {
+                            DriverManager.setLoginTimeout(10);
                             con = DriverManager.getConnection(RouteService.MSSQL_DB,
                                     RouteService.MSSQL_LOGIN, RouteService.MSSQL_PASS);
                             //encrypt=true; trustServerCertificate=false;

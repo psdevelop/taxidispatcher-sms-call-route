@@ -154,6 +154,9 @@ public class RouteService extends Service {
             //        "Ошибка извлечения настроек! Текст сообщения: "
             //                +e.getMessage()+".", Toast.LENGTH_LONG).show();
         }
+		if (ENABLE_SMS_MAP) {
+			loadSMSSendMap();
+		}
     }
 
     @Override
@@ -311,10 +314,6 @@ public class RouteService extends Service {
 
         smsCheckTimer = new SMSCheckTimer(this);
         callItCheckTimer = new CallItCheckTimer(this);
-
-        if (ENABLE_SMS_MAP && !isSmsDeviceMapInit) {
-            loadSMSSendMap();
-        }
     }
 
     @Override
@@ -571,7 +570,7 @@ public class RouteService extends Service {
                                     }
 
                                     for (int dindex = 0; dindex < smsDeviceMap.size(); dindex++) {
-                                        whereStatement += whereStatement.length() > 5
+                                        whereStatement += whereStatement.length() > 10
                                                 ? " OR "
                                                 : (dindex == 0 ? " " : " OR ");
                                         if (smsDeviceMap.get(dindex).length() > 1) {
