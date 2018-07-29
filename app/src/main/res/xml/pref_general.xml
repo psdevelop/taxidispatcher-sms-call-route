@@ -176,7 +176,14 @@
         android:title="Совершать вызовы"
         android:summary="Совершать исходящие вызовы по команде"
         android:defaultValue="false"
-        android:enabled="false"/>
+        android:enabled="true"/>
+
+    <CheckBoxPreference
+        android:key="ENABLE_SMS_MAP"
+        android:title="Рассыл SMS по коду"
+        android:summary="Рассылать SMS по коду оператора"
+        android:defaultValue="false"
+        android:enabled="true"/>
 
     <!-- NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to
          dismiss it. -->

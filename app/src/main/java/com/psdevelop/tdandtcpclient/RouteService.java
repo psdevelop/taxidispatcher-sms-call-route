@@ -27,6 +27,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RouteService extends Service {
 
@@ -74,6 +76,7 @@ public class RouteService extends Service {
     public static boolean ENABLE_SMS_MAILING=false;
     public static boolean ENABLE_AUTO_CALLING=false;
     public static boolean ENABLE_CALLING=false;
+    public static boolean ENABLE_SMS_MAP=false;
     static int CALL_DEVICE_NUM = 0;
     public static String PHONE_CODE = "+7";
     public static String CURRENCY_SHORT = "руб.";
@@ -81,6 +84,8 @@ public class RouteService extends Service {
 
     static SharedPreferences prefs=null;
     PowerManager.WakeLock wakeLock;
+    List<String> smsDeviceMap;
+    boolean isSmsDeviceMapInit = false;
 
     public RouteService() {
     }
@@ -126,6 +131,7 @@ public class RouteService extends Service {
             ENABLE_SMS_MAILING = prefs.getBoolean("ENABLE_SMS_MAILING", false);
             ENABLE_AUTO_CALLING = prefs.getBoolean("ENABLE_AUTO_CALLING", false);
             ENABLE_CALLING = prefs.getBoolean("ENABLE_CALLING", false);
+            ENABLE_SMS_MAP = prefs.getBoolean("ENABLE_SMS_MAP", false);
             CALL_DEVICE_NUM = strToIntDef(prefs.getString("CALL_DEVICE_NUM", "0"), 0);
             PHONE_CODE = prefs.getString("PHONE_CODE", "+7");
             CURRENCY_SHORT =  prefs.getString("CURRENCY_SHORT", "руб.");
@@ -305,6 +311,10 @@ public class RouteService extends Service {
 
         smsCheckTimer = new SMSCheckTimer(this);
         callItCheckTimer = new CallItCheckTimer(this);
+
+        if (ENABLE_SMS_MAP && !isSmsDeviceMapInit) {
+            loadSMSSendMap();
+        }
     }
 
     @Override
@@ -499,6 +509,10 @@ public class RouteService extends Service {
     }
 
     public void checkWaitingSMS()   {
+        if (ENABLE_SMS_MAP && !isSmsDeviceMapInit) {
+            loadSMSSendMap();
+        }
+
         if (ENABLE_SMS_NOTIFICATIONS&&(ENABLE_DRIVER_ORDER_SMS||
                 ENABLE_MOVETO_CLIENT_SMS||ENABLE_REPORT_CLIENT_SMS
         ||ENABLE_ONPLACE_CLIENT_SMS)) {
@@ -540,7 +554,37 @@ public class RouteService extends Service {
                             if (con != null) {
 
                                 Statement statement = con.createStatement();
-                                String queryString = "select * from SMSSendOrders";
+
+                                String whereStatement = "";
+                                if (ENABLE_SMS_MAP) {
+
+                                	if (!isSmsDeviceMapInit) {
+                                		return false;
+									}
+
+                                    whereStatement = " WHERE ";
+                                    if (ENABLE_DRIVER_ORDER_SMS && DRV_SMS_TEXT.length() > 5) {
+                                        whereStatement += " DRIVER_SMS_SEND_STATE = 1 ";
+                                    }
+                                    if (smsDeviceMap.size() == 0) {
+                                        return false;
+                                    }
+
+                                    for (int dindex = 0; dindex < smsDeviceMap.size(); dindex++) {
+                                        whereStatement += whereStatement.length() > 5
+                                                ? " OR "
+                                                : (dindex == 0 ? " " : " OR ");
+                                        if (smsDeviceMap.get(dindex).length() > 1) {
+                                            whereStatement += " CHARINDEX( '" + smsDeviceMap.get(dindex) +
+                                                    "', Telefon_klienta) = 1 ";
+                                        } else {
+                                            whereStatement += " 1=0 ";
+                                        }
+                                    }
+                                }
+
+                                String queryString = "select * from SMSSendOrders" + whereStatement;
+
                                 ResultSet rs = statement.executeQuery(queryString);
 
                                 while (rs.next()) {
@@ -764,6 +808,87 @@ public class RouteService extends Service {
             //}
 
         }.execute();
+    }
+
+    public void loadSMSSendMap()   {
+        smsDeviceMap = new ArrayList<String>();
+        isSmsDeviceMapInit = false;
+        if (ENABLE_SMS_MAP && CALL_DEVICE_NUM > 0) {
+            new AsyncTask() {
+                public void showMessageRequest(String msg_text) {
+                    //this.showMyMsg("sock show timer");
+                    Message msg = new Message();
+                    //msg.obj = this.mainActiv;
+                    msg.arg1 = MainActivity.SHOW_MESSAGE_TOAST;
+                    Bundle bnd = new Bundle();
+                    bnd.putString("msg_text", msg_text);
+                    msg.setData(bnd);
+                    handle.sendMessage(msg);
+                }
+
+                public void sendSMSRequest(String sms_text, String phone) {
+                    //this.showMyMsg("sock show timer");
+                    Message msg = new Message();
+                    //msg.obj = this.mainActiv;
+                    msg.arg1 = PROCESS_SMS_DATA;
+                    Bundle bnd = new Bundle();
+                    bnd.putString(SMS_TEXT, sms_text);
+                    bnd.putString(PHONE, phone);
+                    msg.setData(bnd);
+                    handle.sendMessage(msg);
+                }
+
+                @Override
+                protected Object doInBackground(Object... params) {
+                    // TODO Auto-generated method stub
+                    try {
+                        Class.forName("net.sourceforge.jtds.jdbc.Driver").newInstance();
+                        //Class.forName("com.microsoft.jdbc.sqlserver.SQLServerDriver");
+                        Connection con = null;
+
+                        try {
+                            con = DriverManager.getConnection(MSSQL_DB, MSSQL_LOGIN, MSSQL_PASS);
+                            //encrypt=true; trustServerCertificate=false;
+                            if (con != null) {
+
+                                Statement statement = con.createStatement();
+                                String queryString = "select * from DEVICE_CODES where device_num=" +
+                                        CALL_DEVICE_NUM;
+                                ResultSet rs = statement.executeQuery(queryString);
+
+                                while (rs.next()) {
+                                    smsDeviceMap.add(rs.getString("code"));
+                                }
+
+                                isSmsDeviceMapInit = true;
+                            } else
+                                showMessageRequest("Ошибка соединения!");
+                        } catch (Exception e) {
+                            showMessageRequest("Ошибка работы с БД! Текст сообщения: "
+                                    + e.getMessage());
+                        } finally {
+                            try {
+                                if (con != null) {
+                                    con.close();
+                                }
+                            } catch (SQLException e) {
+                                throw new RuntimeException(e.getMessage());
+                            }
+                        }
+
+                    } catch (Exception e) {
+                        showMessageRequest(
+                                "Ошибка извлечения класса драйвера! Текст сообщения: "
+                                        + e.getMessage() + ".");
+                    }
+                    return null;
+                }
+
+
+            }.execute();
+        }   else    {
+            //sendInfoBroadcast( ID_ACTION_SHOW_OUTSMS_INFO, "SMS отправка запрещена!");
+        }
     }
 
     static String phoneNumber = "";
